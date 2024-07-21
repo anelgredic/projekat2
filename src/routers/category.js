@@ -1,5 +1,6 @@
 const express = require("express");
-const { Category } = require("../database/models");
+const db = require("../database/models/index");
+const Category = db.Category;
 
 const router = new express.Router();
 

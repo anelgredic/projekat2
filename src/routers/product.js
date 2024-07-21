@@ -1,11 +1,13 @@
 const express = require("express");
-const { Product, Category, ProductCategory } = require("../database/models");
+const db = require("../database/models/index");
+const Product = db.Product;
+const Category = db.Category;
+const ProductCategory = db.ProductCategory;
 
 const router = new express.Router();
 
 // Kreiranje product-a
 router.post("/products", async (req, res) => {
-  console.log(Product);
   try {
     const { name, price, description } = req.body;
     const newProduct = await Product.create({ name, price, description });
@@ -88,30 +90,57 @@ router.delete("/products/:id", async (req, res) => {
 
 // Dodavanje kategorije proizvodu
 
-router.patch(
-  "/products/:productId/categories/:categoryId",
-  async (req, res) => {
-    try {
-      const { productId, categoryId } = req.params;
-      const product = await Product.findByPk(productId);
-      const category = await Category.findByPk(categoryId);
+router.patch("/product/add/category", async (req, res) => {
+  try {
+    const { productId, categoriesIds } = req.body;
 
-      if (!product || !category) {
-        return res
-          .status(404)
-          .send({ error: "Product or Category not found!" });
-      }
+    const product = await Product.findByPk(productId);
 
-      const categoryProduct = await ProductCategory.create({
-        productId,
-        categoryId,
-      });
-
-      res.status(201).send(categoryProduct);
-    } catch (e) {
-      res.status(500).send();
+    if (!product) {
+      return res.status(404).send({ error: "Product not found!" });
     }
+
+    const categories = await Category.findAll({
+      where: { id: categoriesIds },
+    });
+
+    if (categories.length !== categoriesIds.length) {
+      return res.status(404).send({ error: "Some categories not found!" });
+    }
+
+    const productCategories = categoriesIds.map((categoryId) => ({
+      productId,
+      categoryId,
+    }));
+
+    await ProductCategory.bulkCreate(productCategories);
+
+    res.status(201).send({ message: "Categories added to product!" });
+  } catch (e) {
+    res.status(500).send();
   }
-);
+});
+
+router.delete("/product/delete/category", async (req, res) => {
+  const { productId, categoriesIds } = req.body;
+
+  const product = await Product.findByPk(productId);
+
+  if (!product) {
+    return res.status(404).send({ error: "Product not found!" });
+  }
+
+  const categories = await Category.findAll({ where: { id: categoriesIds } });
+
+  if (categories.length !== categoriesIds.length) {
+    return res.status(404).send({ error: "Some categories not found!" });
+  }
+
+  await ProductCategory.destroy({
+    where: { productId, categoryId: categoriesIds },
+  });
+
+  res.status(201).send({ message: "Categories are deleted from product!" });
+});
 
 module.exports = router;
