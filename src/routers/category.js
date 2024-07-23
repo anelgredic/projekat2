@@ -1,13 +1,14 @@
 const express = require("express");
 const db = require("../database/models/index");
 const Category = db.Category;
+const categoryService = require("../services/category");
 
 const router = new express.Router();
 
 router.post("/categories", async (req, res) => {
   try {
     const { name } = req.body;
-    const newCategory = await Category.create({ name });
+    const newCategory = await categoryService.createCategory(name);
     res.status(201).send(newCategory);
   } catch (e) {
     res.status(500).send(e);
@@ -16,7 +17,7 @@ router.post("/categories", async (req, res) => {
 
 router.get("/categories", async (req, res) => {
   try {
-    const categories = await Category.findAll();
+    const categories = await categoryService.getAllCategories();
     if (!categories) {
       return res.status(404);
     }
@@ -27,7 +28,7 @@ router.get("/categories", async (req, res) => {
 router.get("/categories/:id", async (req, res) => {
   const _id = req.params.id;
   try {
-    const category = await Category.findByPk(_id);
+    const category = await categoryService.getCategoryById(_id);
 
     if (!category) {
       return res.status(404).send({ error: "Category not found" });
@@ -53,7 +54,7 @@ router.patch("/categories/:id", async (req, res) => {
   const _id = req.params.id;
 
   try {
-    const category = await Category.findByPk(_id);
+    const category = await categoryService.getCategoryById(_id);
 
     if (!category) {
       return res.status(404);
@@ -72,13 +73,13 @@ router.delete("/categories/:id", async (req, res) => {
   const _id = req.params.id;
 
   try {
-    const category = await Category.findByPk(_id);
+    const category = await categoryService.getCategoryById(_id);
 
     if (!category) {
       res.status(404);
     }
 
-    await category.destroy();
+    await categoryService.deleteCategory(category);
     res.send(category);
   } catch (e) {}
 });

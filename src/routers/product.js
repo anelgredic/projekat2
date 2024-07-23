@@ -3,6 +3,7 @@ const db = require("../database/models/index");
 const Product = db.Product;
 const Category = db.Category;
 const ProductCategory = db.ProductCategory;
+const productService = require("../services/product");
 
 const router = new express.Router();
 
@@ -10,7 +11,11 @@ const router = new express.Router();
 router.post("/products", async (req, res) => {
   try {
     const { name, price, description } = req.body;
-    const newProduct = await Product.create({ name, price, description });
+    const newProduct = await productService.createProduct(
+      name,
+      price,
+      description
+    );
     res.status(201).send(newProduct);
   } catch (e) {
     res.status(500).send(e);
@@ -19,9 +24,7 @@ router.post("/products", async (req, res) => {
 
 router.get("/products", async (req, res) => {
   try {
-    const products = await Product.findAll({
-      include: { model: Category, as: "categories" },
-    });
+    const products = await productService.getAllProducts();
 
     res.send(products);
   } catch (e) {}
@@ -30,9 +33,7 @@ router.get("/products", async (req, res) => {
 router.get("/products/:id", async (req, res) => {
   const _id = req.params.id;
   try {
-    const product = await Product.findByPk(_id, {
-      include: { model: Category, as: "categories" },
-    });
+    const product = await productService.getProductById(_id, true);
 
     if (!product) {
       return res.status(404).send({ error: "Product not found!" });
@@ -58,10 +59,10 @@ router.patch("/products/:id", async (req, res) => {
   const _id = req.params.id;
 
   try {
-    const product = await Product.findByPk(_id);
+    const product = await productService.getProductById(_id);
 
     if (!product) {
-      return res.status(404);
+      return res.status(404).send();
     }
 
     updates.forEach((update) => (product[update] = req.body[update]));
@@ -77,13 +78,13 @@ router.delete("/products/:id", async (req, res) => {
   const _id = req.params.id;
 
   try {
-    const product = await Product.findByPk(_id);
+    const product = await productService.getProductById(_id);
 
     if (!product) {
-      res.status(404);
+      res.status(404).send();
     }
 
-    await product.destroy();
+    await productService.deleteProduct(product);
     res.send(product);
   } catch (e) {}
 });
@@ -94,7 +95,7 @@ router.patch("/product/add/category", async (req, res) => {
   try {
     const { productId, categoriesIds } = req.body;
 
-    const product = await Product.findByPk(productId);
+    const product = await productService.getProductById(productId);
 
     if (!product) {
       return res.status(404).send({ error: "Product not found!" });
@@ -108,12 +109,7 @@ router.patch("/product/add/category", async (req, res) => {
       return res.status(404).send({ error: "Some categories not found!" });
     }
 
-    const productCategories = categoriesIds.map((categoryId) => ({
-      productId,
-      categoryId,
-    }));
-
-    await ProductCategory.bulkCreate(productCategories);
+    await productService.addCategoriesToProduct(categoriesIds, productId);
 
     res.status(201).send({ message: "Categories added to product!" });
   } catch (e) {
@@ -124,7 +120,7 @@ router.patch("/product/add/category", async (req, res) => {
 router.delete("/product/delete/category", async (req, res) => {
   const { productId, categoriesIds } = req.body;
 
-  const product = await Product.findByPk(productId);
+  const product = await productService.getProductById(productId);
 
   if (!product) {
     return res.status(404).send({ error: "Product not found!" });
