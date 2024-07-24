@@ -30,10 +30,46 @@ class Product {
       };
     }
     const product = await this.db.Product.findByPk(id, includeOptions);
+
+    if (!product) {
+      const error = new Error("Product not found!");
+      error.status = 404;
+      throw error;
+    }
+    return product;
+  }
+
+  async updateProduct(updates, productId) {
+    const updateKeys = Object.keys(updates);
+    const allowedUpdates = ["name", "price", "description"];
+    const isValidOperation = updateKeys.every((update) =>
+      allowedUpdates.includes(update)
+    );
+
+    if (!isValidOperation) {
+      const error = new Error("Invalid updates!");
+      error.status = 400;
+      throw error;
+    }
+    const product = await this.getProductById(productId);
+
+    if (!product) {
+      const error = new Error("Product not found!");
+      error.status = 404;
+      throw error;
+    }
+
+    updateKeys.forEach((update) => (product[update] = updates[update]));
     return product;
   }
 
   async deleteProduct(product) {
+    if (!product) {
+      const error = new Error("Product not found!");
+      error.status = 404;
+      throw error;
+    }
+
     await product.destroy();
   }
 
