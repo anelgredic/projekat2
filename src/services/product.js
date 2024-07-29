@@ -22,14 +22,13 @@ class Product {
     return products;
   }
 
-  async getProductById(id, includeCategories = false) {
-    let includeOptions;
-    if (includeCategories === true) {
-      includeOptions = {
-        include: { model: this.db.Category, as: "categories" },
-      };
-    }
-    const product = await this.db.Product.findByPk(id, includeOptions);
+  async getProductById(id) {
+    const product = await this.db.Product.findByPk(id, {
+      include: {
+        model: this.db.Category,
+        as: "categories",
+      },
+    });
 
     if (!product) {
       const error = new Error("Product not found!");
@@ -37,6 +36,30 @@ class Product {
       throw error;
     }
     return product;
+  }
+
+  // Dohvatanje kategorija povezanih sa proizvodom
+  async getProductCategories(product) {
+    const currentCategoryIds = product.categories.map(
+      (category) => category.id
+    );
+
+    return currentCategoryIds;
+  }
+
+  // Provera da li su sve navedene kategorije povezane sa proizvodom
+  async areAllCategoriesLinkedToProduct(categoriesIds, currentCategoryIds) {
+    const allCategoriesMatch = categoriesIds.every((categoryId) =>
+      currentCategoryIds.includes(categoryId)
+    );
+
+    if (!allCategoriesMatch) {
+      const error = new Error(
+        "All specified categories must be currently associated with the product"
+      );
+      error.status = 400;
+      throw error;
+    }
   }
 
   async updateProduct(updates, productId) {

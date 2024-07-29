@@ -31,7 +31,7 @@ router.get("/categories/:id", async (req, res) => {
   } catch (e) {
     res
       .status(e.status || 500)
-      .send({ error: e.message } || { error: "Internal Server Error" });
+      .send({ error: e.message || "Internal Server Error" });
   }
 });
 
@@ -47,7 +47,7 @@ router.patch("/categories/:id", async (req, res) => {
   } catch (e) {
     res
       .status(e.status || 500)
-      .send({ error: e.message } || { error: "Internal Server Error" });
+      .send({ error: e.message || "Internal Server Error" });
   }
 });
 
@@ -62,7 +62,7 @@ router.delete("/categories/:id", async (req, res) => {
   } catch (e) {
     res
       .status(e.status || 500)
-      .send({ error: e.message } || { error: "Internal Server Error" });
+      .send({ error: e.message || "Internal Server Error" });
   }
 });
 

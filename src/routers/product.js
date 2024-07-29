@@ -34,17 +34,13 @@ router.get("/products", async (req, res) => {
 router.get("/products/:id", async (req, res) => {
   const _id = req.params.id;
   try {
-    const product = await productService.getProductById(_id, true);
-
-    if (!product) {
-      return res.status(404).send({ error: "Product not found!" });
-    }
+    const product = await productService.getProductById(_id);
 
     res.send(product);
   } catch (e) {
     res
       .status(e.status || 500)
-      .send({ error: e.message } || { error: "Internal Server Error" });
+      .send({ error: e.message || "Internal Server Error" });
   }
 });
 
@@ -60,7 +56,7 @@ router.patch("/products/:id", async (req, res) => {
   } catch (e) {
     res
       .status(e.status || 500)
-      .send({ error: e.message } || { error: "Internal Server Error" });
+      .send({ error: e.message || "Internal Server Error" });
   }
 });
 
@@ -75,7 +71,7 @@ router.delete("/products/:id", async (req, res) => {
   } catch (e) {
     res
       .status(e.status || 500)
-      .send({ error: e.message } || { error: "Internal Server Error" });
+      .send({ error: e.message || "Internal Server Error" });
   }
 });
 
@@ -94,7 +90,7 @@ router.patch("/product/add/category", async (req, res) => {
   } catch (e) {
     res
       .status(e.status || 500)
-      .send({ error: e.message } || { error: "Internal Server Error" });
+      .send({ error: e.message || "Internal Server Error" });
   }
 });
 
@@ -102,9 +98,15 @@ router.delete("/product/delete/category", async (req, res) => {
   const { productId, categoriesIds } = req.body;
 
   try {
-    await productService.getProductById(productId, true);
+    const product = await productService.getProductById(productId);
+    const currentCategoryIds = await productService.getProductCategories(
+      product
+    );
 
-    await categoryService.getCategoriesByIds(categoriesIds);
+    await productService.areAllCategoriesLinkedToProduct(
+      categoriesIds,
+      currentCategoryIds
+    );
 
     await ProductCategory.destroy({
       where: { productId, categoryId: categoriesIds },
@@ -114,7 +116,7 @@ router.delete("/product/delete/category", async (req, res) => {
   } catch (e) {
     res
       .status(e.status || 500)
-      .send({ error: e.message } || { error: "Internal Server Error" });
+      .send({ error: e.message || "Internal Server Error" });
   }
 });
 
