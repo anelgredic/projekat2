@@ -108,9 +108,7 @@ router.delete("/product/delete/category", async (req, res) => {
       currentCategoryIds
     );
 
-    await ProductCategory.destroy({
-      where: { productId, categoryId: categoriesIds },
-    });
+    await productService.deleteProductCategory(productId, categoriesIds);
 
     res.status(201).send({ message: "Categories are deleted from product!" });
   } catch (e) {

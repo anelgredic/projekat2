@@ -104,6 +104,12 @@ class Product {
 
     await this.db.ProductCategory.bulkCreate(productCategories);
   }
+
+  async deleteProductCategory(productId, categoriesIds) {
+    await this.db.ProductCategory.destroy({
+      where: { productId, categoryId: categoriesIds },
+    });
+  }
 }
 
 module.exports = new Product(db);
